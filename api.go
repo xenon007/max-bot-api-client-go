@@ -12,10 +12,18 @@ import (
 	"net/url"
 	"os"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/max-messenger/max-bot-api-client-go/configservice"
 	"github.com/max-messenger/max-bot-api-client-go/schemes"
+)
+
+const (
+	defaultTimeout = 120
+	defaultPause   = 1
+
+	maxRetries    = 5
 )
 
 // Api implements main part of Max Bot API
@@ -34,13 +42,12 @@ type Api struct {
 
 // New Max Bot Api object
 func New(key string) *Api {
-	timeout := 30
 	u, err := url.Parse("https://botapi.max.ru/")
 	if err != nil {
 		fmt.Println(err.Error())
 	}
 
-	cl := newClient(key, "1.2.5", u, &http.Client{Timeout: time.Duration(timeout) * time.Second})
+	cl := newClient(key, "1.2.5", u, &http.Client{Timeout: time.Duration(defaultTimeout) * time.Second})
 	return &Api{
 		Bots:          newBots(cl),
 		Chats:         newChats(cl),
@@ -49,7 +56,7 @@ func New(key string) *Api {
 		Subscriptions: newSubscriptions(cl),
 		Debugs:        newDebugs(cl, 0),
 		client:        cl,
-		timeout:       timeout,
+		timeout:       defaultTimeout,
 		pause:         1,
 	}
 }
@@ -187,7 +194,7 @@ func (a *Api) bytesToProperAttachment(b []byte) schemes.AttachmentInterface {
 	return attachment
 }
 
-func (a *Api) getUpdates(limit int, timeout int, marker int64, types []string) (*schemes.UpdateList, error) {
+func (a *Api) getUpdates(ctx context.Context, limit int, timeout int, marker int64, types []string) (*schemes.UpdateList, error) {
 	result := new(schemes.UpdateList)
 	values := url.Values{}
 	if limit > 0 {
@@ -204,20 +211,61 @@ func (a *Api) getUpdates(limit int, timeout int, marker int64, types []string) (
 			values.Add("types", t)
 		}
 	}
-	body, err := a.client.request(http.MethodGet, "updates", values, false, nil)
+	
+	body, err := a.client.requestWithContext(ctx, http.MethodGet, "updates", values, false, nil)
 	if err != nil {
 		if err == errLongPollTimeout {
 			return result, nil
 		}
-		return result, err
+		return result, fmt.Errorf("failed to request updates: %w", err)
 	}
 	defer func() {
 		if err := body.Close(); err != nil {
-			log.Println(err)
+			log.Printf("Error closing response body: %v", err)
 		}
 	}()
-	jb, _ := ioutil.ReadAll(body)
-	return result, json.Unmarshal(jb, result)
+	
+	jb, err := ioutil.ReadAll(body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response body: %w", err)
+	}
+	
+	if err := json.Unmarshal(jb, result); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal updates: %w", err)
+	}
+	
+	return result, nil
+}
+
+func (a *Api) getUpdatesWithRetry(ctx context.Context, limit int, timeout int, marker int64, types []string) (*schemes.UpdateList, error) {
+	var result *schemes.UpdateList
+	var lastErr error
+	
+	for attempt := 0; attempt < maxRetries; attempt++ {
+		select {
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		default:
+		}
+		
+		result, lastErr = a.getUpdates(ctx, limit, timeout, marker, types)
+		if lastErr == nil || lastErr == errLongPollTimeout {
+			return result, lastErr
+		}
+		
+		if attempt < maxRetries-1 {
+			retryWait := time.Duration(1<<attempt)
+			log.Printf("Attempt %d failed, retrying in %v: %v", attempt+1, retryWait, lastErr)
+			
+			select {
+			case <-ctx.Done():
+				return nil, ctx.Err()
+			case <-time.After(retryWait):
+			}
+		}
+	}
+	
+	return nil, fmt.Errorf("failed after %d attempts: %w", maxRetries, lastErr)
 }
 
 // GetUpdates returns updates channel
@@ -232,18 +280,28 @@ func (a *Api) GetUpdates(ctx context.Context) chan schemes.UpdateInterface {
 			case <-time.After(time.Duration(a.pause) * time.Second):
 				var marker int64
 				for {
-					upds, err := a.getUpdates(50, a.timeout, marker, []string{})
+					upds, err := a.getUpdatesWithRetry(ctx, 50, a.timeout, marker, []string{})
 					if err != nil {
-						log.Println(err)
+						select {
+						case <-ctx.Done():
+							return
+						default:
+							log.Printf("Error getting updates: %v", err)
+							break
+						}
+					}
+					
+					if upds == nil || len(upds.Updates) == 0 {
 						break
 					}
-					if len(upds.Updates) == 0 {
-						break
-					}
+
 					for _, u := range upds.Updates {
 						ch <- a.bytesToProperUpdate(u)
 					}
-					marker = *upds.Marker
+
+					if upds.Marker != nil {
+						marker = *upds.Marker
+					}
 				}
 			}
 		}

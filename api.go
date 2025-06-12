@@ -23,7 +23,7 @@ const (
 	defaultTimeout = 120
 	defaultPause   = 1
 
-	maxRetries    = 5
+	maxRetries    = 3
 )
 
 // Api implements main part of Max Bot API

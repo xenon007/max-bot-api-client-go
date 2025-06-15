@@ -8,7 +8,7 @@ import (
 	"net/url"
 	"strconv"
 
-	"github.com/max-messenger/max-bot-api-client-go/schemes"
+	"github.com/xenon007/max-bot-api-client-go/schemes"
 )
 
 type chats struct {

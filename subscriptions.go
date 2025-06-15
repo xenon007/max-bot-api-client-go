@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/max-messenger/max-bot-api-client-go/schemes"
+	"github.com/xenon007/max-bot-api-client-go/schemes"
 )
 
 type subscriptions struct {

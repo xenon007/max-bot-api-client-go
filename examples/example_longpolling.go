@@ -13,9 +13,9 @@ import (
 	"os"
 	"os/signal"
 
-	maxbot "github.com/max-messenger/max-bot-api-client-go"
+	maxbot "github.com/xenon007/max-bot-api-client-go"
 
-	"github.com/max-messenger/max-bot-api-client-go/schemes"
+	"github.com/xenon007/max-bot-api-client-go/schemes"
 )
 
 func main() {

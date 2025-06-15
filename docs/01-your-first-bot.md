@@ -2,7 +2,7 @@
 
 Для начала вам нужно получить токен бота. Для этого откройте диалог с [MasterBot](https://max.ru/primebot) и создайте нового бота, следуя инструкциям. После этого PrimeBot отправит вам токен.
 
-Создайте новый проект `my-first-bot` и установите `github.com/max-messenger/max-bot-api-client-go`. Для этого откройте терминал и выполните следующие команды:
+Создайте новый проект `my-first-bot` и установите `github.com/xenon007/max-bot-api-client-go`. Для этого откройте терминал и выполните следующие команды:
 ```sh
 # Создайте новую папку для исходного кода вашего модуля Go и перейдите в неё
 mkdir my-first-bot
@@ -11,7 +11,7 @@ cd my-first-bot
 go mod init first-max-bot
 
 # Установите библиотеку для работы с MACX API на golang
-go get github.com/max-messenger/max-bot-api-client-go
+go get github.com/xenon007/max-bot-api-client-go
 ```
 
 Команда go mod init создает файл go.mod для отслеживания зависимостей вашего кода. Пока что файл включает только имя вашего модуля и версию Go, которую поддерживает ваш код.
@@ -35,14 +35,14 @@ func main() {
 
 Есть два типа пакетов: исполняемые (executable) и библиотеки (reusable). Для создания исполняемых файлов пакет должен иметь имя main. Все остальные пакеты не являются исполняемыми. При этом пакет main должен содержать функцию main, которая является входной точкой в приложение.
 
-Импортируем в наш пакет main установленный модуль `github.com/max-messenger/max-bot-api-client-go`  
+Импортируем в наш пакет main установленный модуль `github.com/xenon007/max-bot-api-client-go`  
 
 
 ```go 
 package main
 import (
     "fmt"
-	maxbot "github.com/max-messenger/max-bot-api-client-go"
+	maxbot "github.com/xenon007/max-bot-api-client-go"
 )
 
 func main() {
@@ -62,7 +62,7 @@ func main() {
 package main
 import (
     "fmt"
-	maxbot "github.com/max-messenger/max-bot-api-client-go"
+	maxbot "github.com/xenon007/max-bot-api-client-go"
 )
 
 func main() {

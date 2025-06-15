@@ -10,9 +10,9 @@ import (
 	"os/signal"
 	"strings"
 
-	maxbot "github.com/max-messenger/max-bot-api-client-go"
-	"github.com/max-messenger/max-bot-api-client-go/configservice"
-	"github.com/max-messenger/max-bot-api-client-go/schemes"
+	maxbot "github.com/xenon007/max-bot-api-client-go"
+	"github.com/xenon007/max-bot-api-client-go/configservice"
+	"github.com/xenon007/max-bot-api-client-go/schemes"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"

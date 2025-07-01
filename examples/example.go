@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/signal"
 	"strings"
+	"syscall"
 
 	maxbot "github.com/max-messenger/max-bot-api-client-go"
 	"github.com/max-messenger/max-bot-api-client-go/configservice"
@@ -67,8 +68,8 @@ func main() {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	go func() {
-		exit := make(chan os.Signal)
-		signal.Notify(exit, os.Kill, os.Interrupt)
+		exit := make(chan os.Signal, 1)
+		signal.Notify(exit, syscall.SIGTERM, os.Interrupt)
 		<-exit
 		cancel()
 	}()

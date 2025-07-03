@@ -73,8 +73,8 @@ func main() {
 
 	ctx, cancel := context.WithCancel(context.Background()) // создам 
 	go func() {
-		exit := make(chan os.Signal)
-		signal.Notify(exit, os.Kill, os.Interrupt)
+		exit := make(chan os.Signal, 1)
+		signal.Notify(exit, syscall.SIGTERM, os.Interrupt)
 		<-exit
 		cancel()
 	}()

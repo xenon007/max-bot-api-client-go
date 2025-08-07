@@ -1,6 +1,7 @@
 package maxbot
 
 import (
+	"context"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -18,10 +19,10 @@ func newBots(client *client) *bots {
 }
 
 // GetBot returns info about current bot. Current bot can be identified by access token. Method returns bot identifier, name and avatar (if any)
-func (a *bots) GetBot() (*schemes.BotInfo, error) {
+func (a *bots) GetBot(ctx context.Context) (*schemes.BotInfo, error) {
 	result := new(schemes.BotInfo)
 	values := url.Values{}
-	body, err := a.client.request(http.MethodGet, "me", values, false, nil)
+	body, err := a.client.request(ctx, http.MethodGet, "me", values, false, nil)
 	if err != nil {
 		return result, err
 	}
@@ -34,10 +35,10 @@ func (a *bots) GetBot() (*schemes.BotInfo, error) {
 }
 
 // PatchBot edits current bot info. Fill only the fields you want to update. All remaining fields will stay untouched
-func (a *bots) PatchBot(patch *schemes.BotPatch) (*schemes.BotInfo, error) {
+func (a *bots) PatchBot(ctx context.Context, patch *schemes.BotPatch) (*schemes.BotInfo, error) {
 	result := new(schemes.BotInfo)
 	values := url.Values{}
-	body, err := a.client.request(http.MethodPatch, "me", values, false, patch)
+	body, err := a.client.request(ctx, http.MethodPatch, "me", values, false, patch)
 	if err != nil {
 		return result, err
 	}

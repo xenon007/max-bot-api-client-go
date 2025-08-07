@@ -1,6 +1,7 @@
 package maxbot
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/url"
@@ -19,16 +20,16 @@ func newDebugs(client *client, chat int64) *debugs {
 }
 
 // Send sends a message to a chat. As a result for this method new message identifier returns.
-func (a *debugs) Send(upd schemes.UpdateInterface) (string, error) {
-	return a.sendMessage(false, false, a.chat, 0, &schemes.NewMessageBody{Text: upd.GetDebugRaw()})
+func (a *debugs) Send(ctx context.Context, upd schemes.UpdateInterface) (string, error) {
+	return a.sendMessage(ctx, false, false, a.chat, 0, &schemes.NewMessageBody{Text: upd.GetDebugRaw()})
 }
 
 // Send sends a message to a chat. As a result for this method new message identifier returns.
-func (a *debugs) SendErr(err error) (string, error) {
-	return a.sendMessage(false, false, a.chat, 0, &schemes.NewMessageBody{Text: err.Error()})
+func (a *debugs) SendErr(ctx context.Context, err error) (string, error) {
+	return a.sendMessage(ctx, false, false, a.chat, 0, &schemes.NewMessageBody{Text: err.Error()})
 }
 
-func (a *debugs) sendMessage(vip bool, reset bool, chatID int64, userID int64, message *schemes.NewMessageBody) (string, error) {
+func (a *debugs) sendMessage(ctx context.Context, vip bool, reset bool, chatID int64, userID int64, message *schemes.NewMessageBody) (string, error) {
 	result := new(schemes.Error)
 	values := url.Values{}
 	if chatID != 0 {
@@ -44,7 +45,7 @@ func (a *debugs) sendMessage(vip bool, reset bool, chatID int64, userID int64, m
 	if vip {
 		mode = "notify"
 	}
-	body, err := a.client.request(http.MethodPost, mode, values, reset, message)
+	body, err := a.client.request(ctx, http.MethodPost, mode, values, reset, message)
 	if err != nil {
 		return "heir", err
 	}

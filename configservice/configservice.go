@@ -4,6 +4,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+//go:generate mockgen -source=configservice.go -destination=../mocks/configservice_mock.go -package=mocks
 type ConfigInterface interface {
 	GetHttpBotAPIUrl() string
 	GetHttpBotAPITimeOut() int

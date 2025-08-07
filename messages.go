@@ -1,6 +1,7 @@
 package maxbot
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"log"
@@ -21,7 +22,7 @@ func newMessages(client *client) *messages {
 }
 
 // GetMessages returns messages in chat: result page and marker referencing to the next page. Messages traversed in reverse direction so the latest message in chat will be first in result array. Therefore if you use from and to parameters, to must be less than from
-func (a *messages) GetMessages(chatID int64, messageIDs []string, from int, to int, count int) (*schemes.MessageList, error) {
+func (a *messages) GetMessages(ctx context.Context, chatID int64, messageIDs []string, from int, to int, count int) (*schemes.MessageList, error) {
 	result := new(schemes.MessageList)
 	values := url.Values{}
 	if chatID != 0 {
@@ -41,7 +42,7 @@ func (a *messages) GetMessages(chatID int64, messageIDs []string, from int, to i
 	if count > 0 {
 		values.Set("count", strconv.Itoa(count))
 	}
-	body, err := a.client.request(http.MethodGet, "messages", values, false, nil)
+	body, err := a.client.request(ctx, http.MethodGet, "messages", values, false, nil)
 	if err != nil {
 		return result, err
 	}
@@ -54,8 +55,8 @@ func (a *messages) GetMessages(chatID int64, messageIDs []string, from int, to i
 }
 
 // EditMessage updates message by id
-func (a *messages) EditMessage(messageID int64, message *Message) error {
-	s, err := a.editMessage(messageID, message.message)
+func (a *messages) EditMessage(ctx context.Context, messageID int64, message *Message) error {
+	s, err := a.editMessage(ctx, messageID, message.message)
 	if err != nil {
 		return err
 	}
@@ -66,11 +67,11 @@ func (a *messages) EditMessage(messageID int64, message *Message) error {
 }
 
 // DeleteMessage deletes message by id
-func (a *messages) DeleteMessage(messageID int64) (*schemes.SimpleQueryResult, error) {
+func (a *messages) DeleteMessage(ctx context.Context, messageID int64) (*schemes.SimpleQueryResult, error) {
 	result := new(schemes.SimpleQueryResult)
 	values := url.Values{}
 	values.Set("message_id", strconv.Itoa(int(messageID)))
-	body, err := a.client.request(http.MethodDelete, "messages", values, false, nil)
+	body, err := a.client.request(ctx, http.MethodDelete, "messages", values, false, nil)
 	if err != nil {
 		return result, err
 	}
@@ -83,11 +84,11 @@ func (a *messages) DeleteMessage(messageID int64) (*schemes.SimpleQueryResult, e
 }
 
 // AnswerOnCallback should be called to send an answer after a user has clicked the button. The answer may be an updated message or/and a one-time user notification.
-func (a *messages) AnswerOnCallback(callbackID string, callback *schemes.CallbackAnswer) (*schemes.SimpleQueryResult, error) {
+func (a *messages) AnswerOnCallback(ctx context.Context, callbackID string, callback *schemes.CallbackAnswer) (*schemes.SimpleQueryResult, error) {
 	result := new(schemes.SimpleQueryResult)
 	values := url.Values{}
 	values.Set("callback_id", callbackID)
-	body, err := a.client.request(http.MethodPost, "answers", values, false, callback)
+	body, err := a.client.request(ctx, http.MethodPost, "answers", values, false, callback)
 	if err != nil {
 		return result, err
 	}
@@ -107,13 +108,13 @@ func (a *messages) NewKeyboardBuilder() *Keyboard {
 }
 
 // Send sends a message to a chat. As a result for this method new message identifier returns.
-func (a *messages) Send(m *Message) (string, error) {
-	return a.sendMessage(m.vip, m.reset, m.chatID, m.userID, m.message)
+func (a *messages) Send(ctx context.Context, m *Message) (string, error) {
+	return a.sendMessage(ctx, m.vip, m.reset, m.chatID, m.userID, m.message)
 }
 
 // Send sends a message to a chat. As a result for this method new message identifier returns.
-func (a *messages) SendMessageResult(m *Message) (schemes.Message, error) {
-	_, err := a.sendMessage(m.vip, m.reset, m.chatID, m.userID, m.message)
+func (a *messages) SendMessageResult(ctx context.Context, m *Message) (schemes.Message, error) {
+	_, err := a.sendMessage(ctx, m.vip, m.reset, m.chatID, m.userID, m.message)
 	switch message := err.(type) {
 	case *schemes.Error:
 		return message.Message, nil
@@ -121,7 +122,7 @@ func (a *messages) SendMessageResult(m *Message) (schemes.Message, error) {
 	return schemes.Message{}, err
 }
 
-func (a *messages) sendMessage(vip bool, reset bool, chatID int64, userID int64, message *schemes.NewMessageBody) (string, error) {
+func (a *messages) sendMessage(ctx context.Context, vip bool, reset bool, chatID int64, userID int64, message *schemes.NewMessageBody) (string, error) {
 	result := new(schemes.Error)
 	values := url.Values{}
 	if chatID != 0 {
@@ -137,7 +138,7 @@ func (a *messages) sendMessage(vip bool, reset bool, chatID int64, userID int64,
 	if vip {
 		mode = "notify"
 	}
-	body, err := a.client.request(http.MethodPost, mode, values, reset, message)
+	body, err := a.client.request(ctx, http.MethodPost, mode, values, reset, message)
 	if err != nil {
 		return "heir", err
 	}
@@ -157,11 +158,11 @@ func (a *messages) sendMessage(vip bool, reset bool, chatID int64, userID int64,
 	return "", result
 }
 
-func (a *messages) editMessage(messageID int64, message *schemes.NewMessageBody) (*schemes.SimpleQueryResult, error) {
+func (a *messages) editMessage(ctx context.Context, messageID int64, message *schemes.NewMessageBody) (*schemes.SimpleQueryResult, error) {
 	result := new(schemes.SimpleQueryResult)
 	values := url.Values{}
 	values.Set("message_id", strconv.Itoa(int(messageID)))
-	body, err := a.client.request(http.MethodPut, "messages", values, false, message)
+	body, err := a.client.request(ctx, http.MethodPut, "messages", values, false, message)
 	if err != nil {
 		return result, err
 	}
@@ -174,11 +175,11 @@ func (a *messages) editMessage(messageID int64, message *schemes.NewMessageBody)
 }
 
 // Check posiable to send a message to a chat.
-func (a *messages) Check(m *Message) (bool, error) {
-	return a.checkUser(m.reset, m.message)
+func (a *messages) Check(ctx context.Context, m *Message) (bool, error) {
+	return a.checkUser(ctx, m.reset, m.message)
 }
 
-func (a *messages) checkUser(reset bool, message *schemes.NewMessageBody) (bool, error) {
+func (a *messages) checkUser(ctx context.Context, reset bool, message *schemes.NewMessageBody) (bool, error) {
 	result := new(schemes.Error)
 	values := url.Values{}
 	if reset {
@@ -190,17 +191,20 @@ func (a *messages) checkUser(reset bool, message *schemes.NewMessageBody) (bool,
 		values.Set("phone_numbers", strings.Join(message.PhoneNumbers, ","))
 	}
 
-	body, err := a.client.request(http.MethodGet, mode, values, reset, nil)
+	body, err := a.client.request(ctx, http.MethodGet, mode, values, reset, nil)
 	if err != nil {
 		return false, err
 	}
 	defer body.Close()
+
 	if err := json.NewDecoder(body).Decode(result); err != nil {
 		// Message sent without errors
 		return false, err
 	}
+
 	if len(result.NumberExist) > 0 {
 		return true, result
 	}
+	
 	return false, result
 }

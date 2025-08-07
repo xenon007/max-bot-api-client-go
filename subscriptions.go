@@ -1,6 +1,7 @@
 package maxbot
 
 import (
+	"context"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -17,11 +18,11 @@ func newSubscriptions(client *client) *subscriptions {
 	return &subscriptions{client: client}
 }
 
-// GetSubscriptions returns list of all subscriptions
-func (a *subscriptions) GetSubscriptions() (*schemes.GetSubscriptionsResult, error) {
+// GetSubscriptions returns the list of all subscriptions
+func (a *subscriptions) GetSubscriptions(ctx context.Context) (*schemes.GetSubscriptionsResult, error) {
 	result := new(schemes.GetSubscriptionsResult)
 	values := url.Values{}
-	body, err := a.client.request(http.MethodGet, "subscriptions", values, false, nil)
+	body, err := a.client.request(ctx, http.MethodGet, "subscriptions", values, false, nil)
 	if err != nil {
 		return result, err
 	}
@@ -34,7 +35,7 @@ func (a *subscriptions) GetSubscriptions() (*schemes.GetSubscriptionsResult, err
 }
 
 // Subscribe subscribes bot to receive updates via WebHook
-func (a *subscriptions) Subscribe(subscribeURL string, updateTypes []string) (*schemes.SimpleQueryResult, error) {
+func (a *subscriptions) Subscribe(ctx context.Context, subscribeURL string, updateTypes []string) (*schemes.SimpleQueryResult, error) {
 	subscription := &schemes.SubscriptionRequestBody{
 		Url:         subscribeURL,
 		UpdateTypes: updateTypes,
@@ -42,7 +43,7 @@ func (a *subscriptions) Subscribe(subscribeURL string, updateTypes []string) (*s
 	}
 	result := new(schemes.SimpleQueryResult)
 	values := url.Values{}
-	body, err := a.client.request(http.MethodPost, "subscriptions", values, false, subscription)
+	body, err := a.client.request(ctx, http.MethodPost, "subscriptions", values, false, subscription)
 	if err != nil {
 		return result, err
 	}
@@ -55,11 +56,11 @@ func (a *subscriptions) Subscribe(subscribeURL string, updateTypes []string) (*s
 }
 
 // Unsubscribe unsubscribes bot from receiving updates via WebHook
-func (a *subscriptions) Unsubscribe(subscriptionURL string) (*schemes.SimpleQueryResult, error) {
+func (a *subscriptions) Unsubscribe(ctx context.Context, subscriptionURL string) (*schemes.SimpleQueryResult, error) {
 	result := new(schemes.SimpleQueryResult)
 	values := url.Values{}
 	values.Set("url", subscriptionURL)
-	body, err := a.client.request(http.MethodDelete, "subscriptions", values, false, nil)
+	body, err := a.client.request(ctx, http.MethodDelete, "subscriptions", values, false, nil)
 	if err != nil {
 		return result, err
 	}

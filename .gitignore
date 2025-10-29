@@ -1,4 +1,5 @@
 *.sum
 *.txt
 *.exe
-/.vscode/
+.vscode/
+.idea/

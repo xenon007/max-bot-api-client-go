@@ -248,10 +248,10 @@ info:
     To specify the data model version you are getting through WebHook subscription, use the `version` property in the request body of the [subscribe](https://dev.max.ru/#operation/subscribe) request.
 
     # Libraries
-    We have developed the official [Java client](https://github.com/max-messenger/max-bot-api-client-java) and [SDK](https://github.com/max-messenger/max-bot-sdk-java).
+    We have developed the official [Java client](https://github.com/xenon007/max-bot-api-client-java) and [SDK](https://github.com/xenon007/max-bot-sdk-java).
 
     # Changelog
-    To see changelog for older versions visit our [GitHub](https://github.com/max-messenger/max-bot-api-schema/releases).
+    To see changelog for older versions visit our [GitHub](https://github.com/xenon007/max-bot-api-schema/releases).
 servers:
   - url: 'https://botapi.max.ru'
 security:
